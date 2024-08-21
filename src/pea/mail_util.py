@@ -1,5 +1,7 @@
 import email
+from email.utils import parsedate_to_datetime
 
+import yaml
 from bs4 import BeautifulSoup
 
 from pea.auth import login
@@ -8,6 +10,8 @@ from pea.auth import login
 class Emails:
     def __init__(self):
         self.server = login()
+        with open("../config.yaml", "r") as file:
+            self.config = yaml.safe_load(file)
 
     def get_mails(self, filter="UNSEEN", from_addr=None):
         self.server.select_folder("INBOX", readonly=True)
@@ -18,6 +22,13 @@ class Emails:
         return selected_mails
 
     def get_mails_content(self, selected_mails):
+        num_mails = len(selected_mails)
+        num_mails = (
+            num_mails
+            if num_mails < self.config["mail_length"]
+            else self.config["mail_length"]
+        )
+        selected_mails = selected_mails[-num_mails:]
         mails_content = []
         for mail in selected_mails:
             mail_content = {}
@@ -28,6 +39,11 @@ class Emails:
             from_addr = email_message.get("From")
             mail_content["from"] = from_addr
             mail_content["subject"] = subject
+
+            date_tuple = email.utils.parsedate_tz(email_message["Date"])
+            if date_tuple:
+                email_date = parsedate_to_datetime(email_message["Date"])
+                mail_content["date_time"] = email_date.strftime("%Y-%m-%d %H:%M:%S %Z")
 
             body = None
 

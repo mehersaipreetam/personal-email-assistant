@@ -4,3 +4,4 @@ python-dotenv==1.0.1
 setuptools==72.2.0
 soupsieve==2.6
 wheel==0.44.0
+pyyaml==6.0.2
