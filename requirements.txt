@@ -5,3 +5,9 @@ setuptools==72.2.0
 soupsieve==2.6
 wheel==0.44.0
 pyyaml==6.0.2
+langchain-core==0.2.34
+langgraph==0.2.6
+langgraph-checkpoint==1.0.3
+langsmith==0.1.101
+langchain_ollama==0.1.1
+ollama==0.3.1

@@ -3,8 +3,46 @@ from email.utils import parsedate_to_datetime
 
 import yaml
 from bs4 import BeautifulSoup
+from langchain_core.tools import tool
+from pydantic import BaseModel, Field
 
 from pea.auth import login
+
+
+class GetMailContent(BaseModel):
+    filter: str = Field(
+        description="Filter on mails supported by IMAPClient like UNSEEN"
+    )
+    from_addr: str = Field(description="Sender's email address")
+
+
+@tool("get_mails_content", args_schema=GetMailContent)
+def get_mails_content_tool(filter: str = "UNSEEN", from_addr: str = None):
+    """
+    Retrieve and parse the content of emails based on specified filters.
+
+    Parameters
+    ----------
+    filter : str, optional
+        The filter criteria for selecting emails. Default is "UNSEEN". Other possible values might include "SEEN", "ALL", etc.
+    from_addr : str, optional
+        The email address to filter by. If None, emails from all addresses are considered.
+
+    Returns
+    -------
+    list of dict
+        A list of dictionaries, each containing the following keys:
+        - "from" : str
+            The sender's email address.
+        - "subject" : str
+            The subject of the email.
+        - "date_time" : str
+            The date and time when the email was sent, in the format "YYYY-MM-DD HH:MM:SS TZ".
+        - "body" : str, optional
+            The plain text body of the email. If the email contains HTML, the text is extracted from the HTML.
+    """
+    email_obj = Emails()
+    return email_obj.get_mails_content(filter=filter, from_addr=from_addr)
 
 
 class Emails:
@@ -13,7 +51,7 @@ class Emails:
         with open("../config.yaml", "r") as file:
             self.config = yaml.safe_load(file)
 
-    def get_mails(self, filter="UNSEEN", from_addr=None):
+    def _get_mails(self, filter, from_addr):
         self.server.select_folder("INBOX", readonly=True)
         if from_addr:
             selected_mails = self.server.search([filter, ["FROM", from_addr]])
@@ -21,7 +59,31 @@ class Emails:
             selected_mails = self.server.search([filter])
         return selected_mails
 
-    def get_mails_content(self, selected_mails):
+    def get_mails_content(self, filter: str = "UNSEEN", from_addr: str = None):
+        """
+        Retrieve and parse the content of emails based on specified filters.
+
+        Parameters
+        ----------
+        filter : str, optional
+            The filter criteria for selecting emails. Default is "UNSEEN". Other possible values might include "SEEN", "ALL", etc.
+        from_addr : str, optional
+            The email address to filter by. If None, emails from all addresses are considered.
+
+        Returns
+        -------
+        list of dict
+            A list of dictionaries, each containing the following keys:
+            - "from" : str
+                The sender's email address.
+            - "subject" : str
+                The subject of the email.
+            - "date_time" : str
+                The date and time when the email was sent, in the format "YYYY-MM-DD HH:MM:SS TZ".
+            - "body" : str, optional
+                The plain text body of the email. If the email contains HTML, the text is extracted from the HTML.
+        """
+        selected_mails = self._get_mails(filter, from_addr)
         num_mails = len(selected_mails)
         num_mails = (
             num_mails
