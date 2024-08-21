@@ -2,7 +2,7 @@ import email
 
 from bs4 import BeautifulSoup
 
-from auth import login
+from pea.auth import login
 
 
 class Emails:
@@ -26,7 +26,6 @@ class Emails:
             email_message = email.message_from_bytes(email_data)
             subject = email_message.get("Subject")
             from_addr = email_message.get("From")
-            print(f"From: {from_addr}\nSubject: {subject}\n")
             mail_content["from"] = from_addr
             mail_content["subject"] = subject
 
@@ -64,4 +63,4 @@ class Emails:
                 )
 
             mails_content.append(mail_content)
-            return mails_content
+        return mails_content
