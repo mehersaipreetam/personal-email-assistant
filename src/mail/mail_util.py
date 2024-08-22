@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 
-from pea.auth import login
+from mail.auth import login
 
 
 class GetMailContent(BaseModel):
