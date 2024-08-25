@@ -7,7 +7,9 @@ from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 from typing_extensions import TypedDict
 
-from mail.mail_util import get_mails_content_tool
+from mail import get_mails_content_tool
+
+llm = None
 
 
 class State(TypedDict):
@@ -19,16 +21,16 @@ def get_mails(state: MessagesState):
     messages = state["messages"]
     response = llm.invoke(messages)
     print("Got the mails")
-    # We return a list, because this will get added to the existing list
+    print(f"Get mails: {response}\n")
     return {"messages": [response]}
 
 
 def summarise(state: MessagesState):
     static_prompt = "You are a personalised mail assistant. Given the below mails, your job is to summarise them each in not more than 2 sentences and output them in order. Make sure for each summary, you provide from, date, subject and the final summary of that mail. The output must be in the format {'from': <from>, 'subject': <subj>, 'datetime': <datetime>, 'summary': <summary>}"
     messages = state["messages"]
-    print(messages)
     response = llm.invoke(static_prompt + str(messages))
     print("Summarisation done")
+    print(f"Summarise: {response}\n")
     return {"messages": [response]}
 
 
@@ -63,6 +65,8 @@ def personal_email_assistant_graph(llm_model, user_query):
     final_state = app.invoke(
         {"messages": [HumanMessage(content=user_query)]},
         config={"configurable": {"thread_id": 42}},
+        debug=True,
     )
     response = final_state["messages"][-1].content
+    print(f"Response: {response}\n")
     return response

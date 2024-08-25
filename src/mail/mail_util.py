@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 
-from mail.auth import login
+from mail import login
 
 
 class GetMailContent(BaseModel):
@@ -16,7 +16,7 @@ class GetMailContent(BaseModel):
     from_addr: str = Field(description="Sender's email address")
 
 
-@tool("get_mails_content", args_schema=GetMailContent)
+@tool("get_mails_content_tool", args_schema=GetMailContent)
 def get_mails_content_tool(filter: str = "UNSEEN", from_addr: str = None):
     """
     Retrieve and parse the content of emails based on specified filters.
@@ -42,7 +42,8 @@ def get_mails_content_tool(filter: str = "UNSEEN", from_addr: str = None):
             The plain text body of the email. If the email contains HTML, the text is extracted from the HTML.
     """
     email_obj = Emails()
-    return email_obj.get_mails_content(filter=filter, from_addr=from_addr)
+    response = email_obj.get_mails_content(filter=filter, from_addr=from_addr)
+    return response
 
 
 class Emails:
