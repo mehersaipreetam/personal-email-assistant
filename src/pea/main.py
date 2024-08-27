@@ -19,9 +19,7 @@ def main():
             llm = get_llm()
 
             # Get the response from the personal email assistant graph
-            response = personal_email_assistant_graph(
-                llm_model=llm, user_query=user_query
-            )
+            response = personal_email_assistant_graph(llm=llm, user_query=user_query)
 
             # Display the response
             st.write("**Response:**")

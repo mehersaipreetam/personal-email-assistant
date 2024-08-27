@@ -8,8 +8,9 @@ from langgraph.prebuilt import ToolNode, tools_condition
 from typing_extensions import TypedDict
 
 from mail import get_mails_content_tool
+from prompts import SUMMARISE_EMAILS_PROMPT
 
-llm = None
+llm_without_tools, llm_with_tools = None, None
 
 
 class State(TypedDict):
@@ -19,26 +20,23 @@ class State(TypedDict):
 # Define the function that calls the model
 def get_mails(state: MessagesState):
     messages = state["messages"]
-    response = llm.invoke(messages)
-    print("Got the mails")
-    print(f"Get mails: {response}\n")
+    response = llm_with_tools.invoke(messages)
     return {"messages": [response]}
 
 
 def summarise(state: MessagesState):
-    static_prompt = "You are a personalised mail assistant. Given the below mails, your job is to summarise them each in not more than 2 sentences and output them in order. Make sure for each summary, you provide from, date, subject and the final summary of that mail. The output must be in the format {'from': <from>, 'subject': <subj>, 'datetime': <datetime>, 'summary': <summary>}"
-    messages = state["messages"]
-    response = llm.invoke(static_prompt + str(messages))
-    print("Summarisation done")
-    print(f"Summarise: {response}\n")
+    static_prompt = SUMMARISE_EMAILS_PROMPT
+    messages = state["messages"][-1].content
+    response = llm_without_tools.invoke(static_prompt + str(messages))
     return {"messages": [response]}
 
 
-def personal_email_assistant_graph(llm_model, user_query):
+def personal_email_assistant_graph(llm, user_query):
     tools = [get_mails_content_tool]
     tool_node = ToolNode(tools)
-    global llm
-    llm = llm_model.bind_tools(tools)
+    global llm_without_tools, llm_with_tools
+    llm_without_tools = llm
+    llm_with_tools = llm.bind_tools(tools)
     # Define a new graph
     workflow = StateGraph(MessagesState)
 
@@ -49,13 +47,10 @@ def personal_email_assistant_graph(llm_model, user_query):
     # Set the entrypoint as `agent`
     # This means that this node is the first one called
     workflow.set_entry_point("get_mails")
-    workflow.add_conditional_edges(
-        "get_mails",
-        tools_condition,
-    )
-    workflow.add_edge("tools", "get_mails")
 
-    workflow.add_edge("get_mails", "summarise")
+    workflow.add_edge("get_mails", "tools")
+
+    workflow.add_edge("tools", "summarise")
 
     workflow.add_edge("summarise", END)
 
@@ -68,5 +63,4 @@ def personal_email_assistant_graph(llm_model, user_query):
         debug=True,
     )
     response = final_state["messages"][-1].content
-    print(f"Response: {response}\n")
     return response

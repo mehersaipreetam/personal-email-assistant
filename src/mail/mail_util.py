@@ -142,4 +142,4 @@ class Emails:
                 )
 
             mails_content.append(mail_content)
-        return mails_content
+        return {"filtered_mails": mails_content}
