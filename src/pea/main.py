@@ -6,6 +6,9 @@ from pea import personal_email_assistant_graph
 
 
 def main():
+    """
+    Main streamlit app function for the project
+    """
     # Load environment variables
     load_dotenv()
 

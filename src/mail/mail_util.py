@@ -10,6 +10,19 @@ from mail import login
 
 
 class GetMailContent(BaseModel):
+    """
+    Model for specifying the parameters to retrieve emails using IMAP.
+
+    Attributes
+    ----------
+    filter : str
+        A string specifying the filter to be applied on the mails. This is
+        typically an IMAP-supported filter like 'UNSEEN'.
+    from_addr : str
+        The email address of the sender. Only emails from this address
+        will be retrieved based on the filter.
+    """
+
     filter: str = Field(
         description="Filter on mails supported by IMAPClient like UNSEEN"
     )
@@ -47,12 +60,52 @@ def get_mails_content_tool(filter: str = "UNSEEN", from_addr: str = None):
 
 
 class Emails:
+    """
+    A class to handle email retrieval and parsing from an IMAP server.
+
+    This class provides methods to connect to an IMAP server, search for emails
+    based on specific filters, and extract content such as the sender, subject,
+    date, and body of the emails.
+
+    Attributes
+    ----------
+    server : IMAPClient
+        An instance of IMAPClient that manages the connection to the email server.
+    config : dict
+        A dictionary loaded from the `config.yaml` file, containing configuration
+        details like the maximum number of emails to retrieve.
+    """
+
     def __init__(self):
+        """
+        Initialize the Emails class by logging into the IMAP server and loading configuration settings.
+
+        The constructor establishes a connection to the email server and reads
+        the configuration from the `config.yaml` file.
+        """
         self.server = login()
         with open("../config.yaml", "r") as file:
             self.config = yaml.safe_load(file)
 
     def _get_mails(self, filter, from_addr):
+        """
+        Retrieve emails from the INBOX based on a specified filter and optional sender address.
+
+        Parameters
+        ----------
+        filter : str or list of str
+            The search filter(s) used to query the mailbox. This could be a specific
+            criterion like 'UNSEEN' or a combination of criteria.
+        from_addr : str or None
+            The email address of the sender to filter the emails. If None, emails
+            are filtered only based on the provided filter.
+
+        Returns
+        -------
+        list
+            A list of unique IDs for the emails that match the specified filter
+            and optional sender address.
+        """
         self.server.select_folder("INBOX", readonly=True)
         if from_addr:
             selected_mails = self.server.search([filter, ["FROM", from_addr]])
