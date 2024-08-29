@@ -1,4 +1,5 @@
-from typing import Annotated
+import ast
+from typing import Annotated, Optional
 
 from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.memory import MemorySaver
@@ -13,44 +14,48 @@ from prompts import SUMMARISE_EMAILS_PROMPT
 llm_without_tools, llm_with_tools = None, None
 
 
-class State(TypedDict):
-    messages: Annotated[list, add_messages]
+class GraphState(TypedDict):
+    user_query: Optional[str] = None
+    mails: Optional[list] = None
+    summary: Optional[str] = None
 
 
 # Define the function that calls the model
-def get_mails(state: MessagesState):
-    messages = state["messages"]
-    response = llm_with_tools.invoke(messages)
-    return {"messages": [response]}
+def get_mails(state: GraphState):
+    user_query = state["user_query"]
+    mails_response = llm_with_tools.invoke(user_query)
+    tool_calls = mails_response.additional_kwargs.get("tool_calls", False)
+    mails = []
+    if tool_calls:
+        func = globals()[tool_calls[0]["function"]["name"]]
+        args = ast.literal_eval(tool_calls[0]["function"]["arguments"])
+        mails = func(**args)
+    return {"mails": mails}
 
 
-def summarise(state: MessagesState):
+def summarise(state: GraphState):
     static_prompt = SUMMARISE_EMAILS_PROMPT
-    messages = state["messages"][-1].content
-    response = llm_without_tools.invoke(static_prompt + str(messages))
-    return {"messages": [response]}
+    mails = state["mails"]
+    summary = llm_without_tools.invoke(static_prompt + str(mails))
+    return {"summary": summary}
 
 
 def personal_email_assistant_graph(llm, user_query):
     tools = [get_mails_content_tool]
-    tool_node = ToolNode(tools)
     global llm_without_tools, llm_with_tools
     llm_without_tools = llm
     llm_with_tools = llm.bind_tools(tools)
     # Define a new graph
-    workflow = StateGraph(MessagesState)
+    workflow = StateGraph(GraphState)
 
     workflow.add_node("get_mails", get_mails)
     workflow.add_node("summarise", summarise)
-    workflow.add_node("tools", tool_node)
 
     # Set the entrypoint as `agent`
     # This means that this node is the first one called
     workflow.set_entry_point("get_mails")
 
-    workflow.add_edge("get_mails", "tools")
-
-    workflow.add_edge("tools", "summarise")
+    workflow.add_edge("get_mails", "summarise")
 
     workflow.add_edge("summarise", END)
 
@@ -58,9 +63,9 @@ def personal_email_assistant_graph(llm, user_query):
     checkpointer = MemorySaver()
     app = workflow.compile(checkpointer=checkpointer)
     final_state = app.invoke(
-        {"messages": [HumanMessage(content=user_query)]},
+        {"user_query": [HumanMessage(content=user_query)]},
         config={"configurable": {"thread_id": 42}},
         debug=True,
     )
-    response = final_state["messages"][-1].content
+    response = final_state["summary"].content
     return response

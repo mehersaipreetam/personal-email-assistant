@@ -16,4 +16,7 @@ SUMMARISE_EMAILS_PROMPT = """
       "datetime": "<email received date and time>",
       "summary": "<brief summary of the email>"
     }
+
+    Strictly follow the guidelines:
+    1. Do NOT return any additional text, just return the output json.
 """

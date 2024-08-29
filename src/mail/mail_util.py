@@ -9,27 +9,6 @@ from pydantic import BaseModel, Field
 from mail import login
 
 
-class GetMailContent(BaseModel):
-    """
-    Model for specifying the parameters to retrieve emails using IMAP.
-
-    Attributes
-    ----------
-    filter : str
-        A string specifying the filter to be applied on the mails. This is
-        typically an IMAP-supported filter like 'UNSEEN'.
-    from_addr : str
-        The email address of the sender. Only emails from this address
-        will be retrieved based on the filter.
-    """
-
-    filter: str = Field(
-        description="Filter on mails supported by IMAPClient like UNSEEN"
-    )
-    from_addr: str = Field(description="Sender's email address")
-
-
-@tool("get_mails_content_tool", args_schema=GetMailContent)
 def get_mails_content_tool(filter: str = "UNSEEN", from_addr: str = None):
     """
     Retrieve and parse the content of emails based on specified filters.
@@ -195,4 +174,4 @@ class Emails:
                 )
 
             mails_content.append(mail_content)
-        return {"filtered_mails": mails_content}
+        return mails_content
