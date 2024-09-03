@@ -15,6 +15,7 @@ llm_without_tools, llm_with_tools = None, None
 
 
 class GraphState(TypedDict):
+    all_responses: Annotated[list, add_messages]
     user_query: Optional[str] = None
     mails: Optional[list] = None
     summary: Optional[str] = None
@@ -30,17 +31,18 @@ def get_mails(state: GraphState):
         func = globals()[tool_calls[0]["function"]["name"]]
         args = ast.literal_eval(tool_calls[0]["function"]["arguments"])
         mails = func(**args)
-    return {"mails": mails}
+    return {"mails": mails, "all_responses": mails}
 
 
 def summarise(state: GraphState):
     static_prompt = SUMMARISE_EMAILS_PROMPT
     mails = state["mails"]
     summary = llm_without_tools.invoke(static_prompt + str(mails))
-    return {"summary": summary}
+    return {"summary": summary, "all_responses": summary}
 
 
 def personal_email_assistant_graph(llm, user_query):
+    # TODO: Add conditional edges, define next step function
     tools = [get_mails_content_tool]
     global llm_without_tools, llm_with_tools
     llm_without_tools = llm
@@ -49,7 +51,7 @@ def personal_email_assistant_graph(llm, user_query):
     workflow = StateGraph(GraphState)
 
     workflow.add_node("get_mails", get_mails)
-    workflow.add_node("summarise", summarise)
+    workflow.add_node("summarise", summarise) 
 
     # Set the entrypoint as `agent`
     # This means that this node is the first one called
