@@ -20,3 +20,13 @@ SUMMARISE_EMAILS_PROMPT = """
     Strictly follow the guidelines:
     1. Do NOT return any additional text, just return the output json.
 """
+
+GET_NEXT_NODE = """
+    You are an intelligent LangGraph agent.
+
+    Your task is to decide the next node/operation at any given stage of execution.
+
+    Given the user query: {user_query}, the latest response {latest_response} and the agents called till now {all_agents}, your task is to choose the next node to be called. At any point, the next node can be one of: {available_nodes} or END.
+
+    Return only the node name and no additional text.
+"""
