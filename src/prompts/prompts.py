@@ -10,15 +10,17 @@ SUMMARISE_EMAILS_PROMPT = """
     A brief summary that encapsulates the main content of the email (summary)
 
     Output each email's details in the following structured JSON format:
-    {
-      "from": "<sender's email address>",
-      "subject": "<email subject>",
-      "datetime": "<email received date and time>",
-      "summary": "<brief summary of the email>"
-    }
+    [
+      {
+        "from": "<sender's email address>",
+        "subject": "<email subject>",
+        "datetime": "<email received date and time>",
+        "summary": "<brief summary of the email>"
+      }
+    ]
 
     Strictly follow the guidelines:
-    1. Do NOT return any additional text, just return the output json.
+    1. Do NOT return any additional text, just return the output in the format [{..}, ...].
 """
 
 GET_NEXT_NODE = """
@@ -27,6 +29,10 @@ GET_NEXT_NODE = """
     Your task is to decide the next node/operation at any given stage of execution.
 
     Given the user query: {user_query}, the latest response {latest_response} and the agents called till now {all_agents}, your task is to choose the next node to be called. At any point, the next node can be one of: {available_nodes} or END.
+
+    Guidelines:
+    1. If the latest response is empty or None, return END.
+    2. Move to "summarise" node only if user asks for it. Otherwise move to end.
 
     Return only the node name and no additional text.
 """

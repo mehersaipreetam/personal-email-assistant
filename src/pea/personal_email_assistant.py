@@ -33,22 +33,40 @@ def get_mails(state: GraphState):
         func = globals()[tool_calls[0]["function"]["name"]]
         args = ast.literal_eval(tool_calls[0]["function"]["arguments"])
         mails = func(**args)
-    return {"mails": [str(mails)], "all_responses": [AIMessage(content=str(mails))], "all_agents": [AIMessage(content="get_mails")]}
+    return {
+        "mails": [str(mails)],
+        "all_responses": [AIMessage(content=str(mails))],
+        "all_agents": [AIMessage(content="get_mails")],
+    }
 
 
 def summarise(state: GraphState):
     static_prompt = SUMMARISE_EMAILS_PROMPT
     mails = state["mails"]
     summary = llm_without_tools.invoke(static_prompt + str(mails))
-    return {"summary": summary, "all_responses": [AIMessage(content=str(summary))], "all_agents": [AIMessage(content="summarise")]}
+    return {
+        "summary": summary,
+        "all_responses": [summary],
+        "all_agents": [AIMessage(content="summarise")],
+    }
+
 
 def decide_next_node(state: GraphState):
-    latest_response = state['all_responses'][-1].content
+    latest_response = state["all_responses"][-1].content
     all_agents = [s.content for s in state["all_agents"]]
-    prompt = GET_NEXT_NODE.format(**{"user_query": state["user_query"][-1].content, "latest_response": latest_response, "all_agents": all_agents, "available_nodes": ["get_mails", "summarise"]})
+    prompt = GET_NEXT_NODE.format(
+        **{
+            "user_query": state["user_query"][-1].content,
+            "latest_response": latest_response,
+            "all_agents": all_agents,
+            "available_nodes": ["get_mails", "summarise"],
+        }
+    )
     response = llm_without_tools.invoke(prompt)
+    if response.content == "END":
+        return END
     return response.content
-    
+
 
 def personal_email_assistant_graph(llm, user_query):
     # TODO: Add conditional edges, define next step function
@@ -60,7 +78,7 @@ def personal_email_assistant_graph(llm, user_query):
     workflow = StateGraph(GraphState)
 
     workflow.add_node("get_mails", get_mails)
-    workflow.add_node("summarise", summarise) 
+    workflow.add_node("summarise", summarise)
 
     # Set the entrypoint as `agent`
     # This means that this node is the first one called
@@ -68,7 +86,7 @@ def personal_email_assistant_graph(llm, user_query):
 
     workflow.add_conditional_edges("get_mails", decide_next_node)
 
-    workflow.add_edge("summarise", END)
+    # workflow.add_edge("summarise", END)
 
     # Initialize memory to persist state between graph runs
     checkpointer = MemorySaver()
@@ -78,5 +96,7 @@ def personal_email_assistant_graph(llm, user_query):
         config={"configurable": {"thread_id": 42}},
         debug=True,
     )
-    response = final_state["summary"].content
+    response = final_state["all_responses"][-1].content
+    if not isinstance(response, dict):
+        response = ast.literal_eval(response)
     return response

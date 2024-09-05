@@ -1,7 +1,7 @@
 from langchain_groq import ChatGroq
 
 
-def get_llm(model="llama-3.1-70b-versatile"):
+def get_llm(model="llama3-70b-8192"):
     llm = ChatGroq(
         model=model,
         temperature=0,

@@ -1,5 +1,6 @@
 import email
 from email.utils import parsedate_to_datetime
+import re
 
 import yaml
 from bs4 import BeautifulSoup
@@ -9,7 +10,7 @@ from pydantic import BaseModel, Field
 from mail import login
 
 
-def get_mails_content_tool(filter: str = "UNSEEN", from_addr: str = None):
+def get_mails_content_tool(filter: str = "SEEN", from_addr: str = None):
     """
     Retrieve and parse the content of emails based on specified filters.
 
@@ -172,6 +173,8 @@ class Emails:
                 mail_content["body"] = "\n".join(
                     [line for line in body.splitlines() if line.strip()]
                 )
+                pattern = r'[^a-zA-Z0-9.,!?;:\'\"()-\[\]{} ]'
+                mail_content["body"] = re.sub(pattern, '', mail_content["body"])
 
             mails_content.append(mail_content)
         return mails_content
