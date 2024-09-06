@@ -3,7 +3,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from llm import get_llm
-from pea import personal_email_assistant_graph
+from pea import personal_email_assistant_graph, personal_email_assistant
 
 # Set the page layout to wide
 st.set_page_config(layout="wide")
@@ -11,7 +11,19 @@ st.set_page_config(layout="wide")
 
 def format_email_data(email_data):
     """
-    Pretty print the email dictionary content.
+    Formats and pretty prints the content of a list of email dictionaries.
+
+    Parameters
+    ----------
+    email_data : list of dict
+        A list of dictionaries where each dictionary contains key-value pairs
+        representing the details of an email (e.g., subject, sender, date, etc.).
+
+    Returns
+    -------
+    str
+        A formatted string where each email is presented with its details
+        in a human-readable format, with each email separated by a line.
     """
     formatted_string = ""
     for i, email in enumerate(email_data, 1):
@@ -25,6 +37,9 @@ def format_email_data(email_data):
 def main():
     """
     Main streamlit app function for the project
+
+    This function serves as the entry point for the Streamlit app, allowing users to query their mailbox
+    and view formatted email data based on their input.
     """
     # Load environment variables
     load_dotenv()
@@ -39,7 +54,7 @@ def main():
             llm = get_llm()
 
             # Get the response from the personal email assistant graph
-            response = personal_email_assistant_graph(llm=llm, user_query=user_query)
+            response = personal_email_assistant(llm=llm, user_query=user_query)
 
             # Display the email data from the response dynamically
             if response:
