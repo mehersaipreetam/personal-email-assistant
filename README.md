@@ -51,7 +51,7 @@ pip install -e .
 Navigate to the src directory and launch the web application using Streamlit:
 ```bash
 cd src
-streamlit run pea/main.py
+streamlit run pea/app.py
 ```
 
 ## License
