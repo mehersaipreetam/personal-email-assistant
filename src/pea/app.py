@@ -3,7 +3,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from llm import get_llm
-from pea import personal_email_assistant_graph, personal_email_assistant
+from pea import personal_email_assistant
 
 # Set the page layout to wide
 st.set_page_config(layout="wide")

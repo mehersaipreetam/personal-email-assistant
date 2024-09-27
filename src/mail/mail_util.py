@@ -4,8 +4,6 @@ import re
 
 import yaml
 from bs4 import BeautifulSoup
-from langchain_core.tools import tool
-from pydantic import BaseModel, Field
 
 from mail import login
 
