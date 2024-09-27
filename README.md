@@ -11,7 +11,7 @@ If you're using Gmail, you'll need to create an app password for secure access t
 
 - Go to [App Passwords](https://myaccount.google.com/apppasswords).
 - You may need to sign in again.
-- Select a suitable app name (For eg. personal-email-assistant) and generate a password(you'll use it in the `.env` file).
+- Select a suitable app name (For eg. personal-email-assistant) and generate a password (you'll use it in the `.env` file).
 
 For more detailed instructions, refer to [Google's documentation](https://support.google.com/mail/answer/185833?hl=en).
 
@@ -51,7 +51,7 @@ pip install -e .
 Navigate to the src directory and launch the web application using Streamlit:
 ```bash
 cd src
-streamlit run pea/main.py
+streamlit run pea/app.py
 ```
 
 ## License
